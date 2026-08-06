@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.angular/
+*.log
+
+# Configuracion local con credenciales
+.env
+backend/.env
+
+# Lo genera el lanzador en cada arranque
+frontend/proxy.conf.json

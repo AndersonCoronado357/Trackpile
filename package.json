@@ -1,0 +1,20 @@
+{
+  "name": "trackpile",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lista personal de proyectos: estado, stack y donde esta publicado cada uno.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/dev.mjs",
+    "dev": "node scripts/dev.mjs",
+    "setup": "node scripts/install.mjs",
+    "db:setup": "node scripts/setup-db.mjs",
+    "db:migrate": "npm --prefix backend run migrate",
+    "db:reset": "npm --prefix backend run reset",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
+    "serve": "npm --prefix backend run serve"
+  }
+}
