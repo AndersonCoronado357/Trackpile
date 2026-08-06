@@ -1,0 +1,1179 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   TRACKPILE - sistema visual
+   Tipografia: Space Grotesk (display) + Plus Jakarta Sans (UI) + JetBrains Mono
+   Profundidad: sin bordes ni sombras; la separacion es el escalon de superficie.
+   El acento aparece en menos del 5% de los pixeles.
+   ========================================================================== */
+
+/* La misma pareja de Dbridge: Plus Jakarta Sans, redondeada y de formas
+   generosas, con JetBrains Mono para cifras, fechas y direcciones. */
+@font-face {
+  font-family: 'Jakarta';
+  src: url('/fonts/PlusJakartaSans.woff2') format('woff2-variations');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono.woff2') format('woff2-variations');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-display: 'Jakarta', ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Jakarta', ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+
+/* ------------------------------------------------------------- tokens: claro */
+
+:root {
+  color-scheme: light;
+
+  /* Gris puro, sin una gota de tinte. El unico color de la app es el naranja. */
+  --bg: #f2f2f2;
+  --surface: #ffffff;
+  --surface-2: #ebebeb;
+  --surface-3: #dfdfdf;
+  --surface-4: #cfcfcf;
+  --rail: #f8f8f8;
+
+  /* Cuatro niveles de tinta: la jerarquia se hace con tinta, no con color. */
+  --ink: #171717;
+  --ink-2: #454545;
+  --ink-3: #737373;
+  --ink-4: #a1a1a1;
+
+  --accent: #f5a627;
+  --accent-hi: #e08f0d;
+  --accent-ink: #9a6206;
+  --accent-soft: rgb(245 166 39 / 0.14);
+  --accent-pill: #fdecd1;
+  --on-accent: #1e1500;
+
+  --ok: #17936b;
+  --ok-soft: #dff0e9;
+  --warn: #b06a09;
+  --danger: #cf4a40;
+  --danger-soft: #fbe8e6;
+
+  /* Sin sombras en ninguna parte: lo que separa es el escalon de superficie. */
+  --scrim: rgb(23 23 23 / 0.34);
+  --hair: #e6e6e6;
+
+  /* Radios generosos: es lo que hace que una tarjeta sea bloque y no recuadro. */
+  --r-panel: 24px;
+  --r-card: 18px;
+  --r-ctrl: 14px;
+  --r-sm: 10px;
+}
+
+/* -------------------------------------------------------------- tokens: oscuro */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface-2: #1f1f1f;
+    --surface-3: #2a2a2a;
+    --surface-4: #383838;
+    --rail: #111111;
+
+    --ink: #f2f2f2;
+    --ink-2: #b0b0b0;
+    --ink-3: #7e7e7e;
+    --ink-4: #5a5a5a;
+
+    --accent: #f5a627;
+    --accent-hi: #ffb748;
+    --accent-ink: #f2b04e;
+    --accent-soft: rgb(245 166 39 / 0.15);
+    --accent-pill: #3a2d16;
+    --on-accent: #1e1500;
+
+    --ok: #43b98b;
+    --ok-soft: #1a2b25;
+    --warn: #d9932f;
+    --danger: #ec6b5e;
+    --danger-soft: #322020;
+
+    --scrim: rgb(0 0 0 / 0.6);
+    --hair: #262626;
+  }
+}
+
+/* El toggle explicito gana sobre la preferencia del sistema en ambos sentidos. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Los mismos grises puros que el oscuro del sistema. Antes este iba tirando a
+     azul y el otro no, asi que habia dos modos oscuros distintos segun se
+     eligiera a mano o se heredara del sistema. */
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface-2: #1f1f1f;
+  --surface-3: #2a2a2a;
+  --surface-4: #383838;
+  --rail: #111111;
+
+  --ink: #f2f2f2;
+  --ink-2: #b0b0b0;
+  --ink-3: #7e7e7e;
+  --ink-4: #5a5a5a;
+
+  --accent: #f5a627;
+  --accent-hi: #ffb748;
+  --accent-ink: #f2b04e;
+  --accent-soft: rgb(245 166 39 / 0.15);
+  --accent-pill: #3a2d16;
+  --on-accent: #1e1500;
+
+  --ok: #43b98b;
+  --ok-soft: #1a2b25;
+  --warn: #d9932f;
+  --danger: #ec6b5e;
+  --danger-soft: #322020;
+
+  --scrim: rgb(0 0 0 / 0.6);
+  --hair: #262626;
+}
+
+/* ------------------------------------------------------------------- acentos */
+
+:root {
+  --a-amber: #f5a627;
+  --a-violet: #8b6ce0;
+  --a-teal: #2fa08c;
+  --a-rose: #dd6c8a;
+  --a-blue: #4f86d6;
+  --a-lime: #7ba33c;
+  --a-slate: #7d8794;
+}
+
+/* ---------------------------------------------------------------------- base */
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* El shell mide EXACTO el viewport y recorta en cada nivel; el unico que
+     scrollea es .tp-scroll. En movil el 100% del alto miente por la barra del
+     navegador, asi que dvh manda cuando existe. */
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  @supports (height: 100dvh) {
+    html,
+    body {
+      height: 100dvh;
+    }
+  }
+
+  app-root {
+    display: block;
+    height: 100%;
+    width: 100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+
+  /* El <router-outlet> es un ancla vacia: si cuenta como celda del grid,
+     empuja la pagina fuera del contenedor y aparece scroll. */
+  router-outlet {
+    display: none;
+  }
+
+  /* Cada pagina enrutada estira exactamente su celda y recorta dentro. */
+  tp-projects-page,
+  tp-auth-page {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    line-height: 1.45;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition:
+      background 200ms var(--ease),
+      color 200ms var(--ease);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+    font-weight: 600;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Scroll funcional, barra invisible en toda la app. */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* El foco NUNCA dibuja un anillo de color: al pulsar salia un cerco naranja
+     que parecia un hover mal hecho. Lo marca la superficie, y solo al navegar
+     con teclado queda un cerco neutro y discreto. */
+  :focus,
+  :focus-visible {
+    outline: none;
+  }
+
+  :is(button, a, [tabindex]):focus-visible {
+    outline: 1.5px solid var(--ink-4);
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
+
+  ::selection {
+    background: var(--surface-4);
+    color: var(--ink);
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  ::placeholder {
+    color: var(--ink-4);
+  }
+
+  input[type='checkbox'] {
+    accent-color: var(--accent);
+  }
+
+  /* Toda cifra alineada en columna. */
+  .mono,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ----------------------------------------------------------------- movimiento */
+
+:root {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 140ms;
+  --t: 240ms;
+  --t-slow: 380ms;
+}
+
+@keyframes tp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/**
+ * Los menus NO se escalan al abrirse. Con `scale` desde la esquina derecha el
+ * borde izquierdo empieza 6 u 8 px corrido y va llegando a su sitio, y lo que se
+ * ve es un desplegable descuadrado con su boton. Ahora solo aparece y baja un
+ * pelo: la posicion final es la posicion desde el primer fotograma.
+ */
+@keyframes tp-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes tp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tp-slide-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/**
+ * Un hijo de rejilla nace con `min-width: auto`, o sea que se niega a bajar del
+ * ancho minimo de su contenido. En el telefono eso hacia que la lista midiera
+ * 526 px dentro de una pantalla de 375 y la mitad de cada fila quedara cortada
+ * contra el filo. Aqui se les permite encogerse y recortar por dentro.
+ */
+tp-projects-page > .tp-page > *,
+.tp-viewport,
+.tp-viewport ul,
+.tp-row-slot {
+  min-width: 0;
+}
+
+/* El cajon de edicion: por la derecha en escritorio. */
+.tp-editor {
+  animation: tp-slide-in 300ms var(--ease) both;
+}
+
+/**
+ * En el telefono ocupa la parte de abajo y sube: se llega con el pulgar, y el
+ * trozo de lista que queda arriba recuerda de donde saliste. Se deja sitio para
+ * la barra del navegador con `dvh`, que si no el pie queda debajo.
+ */
+@media (max-width: 759px) {
+  .tp-editor {
+    inset: auto 0 0 0;
+    max-width: none;
+    height: 92dvh;
+    border-radius: var(--r-panel) var(--r-panel) 0 0;
+    animation: tp-sheet-in 320ms var(--ease-expo) both;
+  }
+}
+
+@keyframes tp-sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Entrada escalonada de 55 ms, con tope para que la lista larga no se arrastre. */
+.tp-stagger > * {
+  animation: tp-rise 600ms var(--ease-expo) both;
+}
+.tp-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.tp-stagger > *:nth-child(2) { animation-delay: 55ms; }
+.tp-stagger > *:nth-child(3) { animation-delay: 110ms; }
+.tp-stagger > *:nth-child(4) { animation-delay: 165ms; }
+.tp-stagger > *:nth-child(5) { animation-delay: 220ms; }
+.tp-stagger > *:nth-child(6) { animation-delay: 275ms; }
+.tp-stagger > *:nth-child(7) { animation-delay: 320ms; }
+.tp-stagger > *:nth-child(8) { animation-delay: 355ms; }
+.tp-stagger > *:nth-child(n + 9) { animation-delay: 385ms; }
+
+/* ----------------------------------------------------------------- componentes */
+
+@layer components {
+  /* Superficie elevada plana: sin borde, sin sombra. */
+  .tp-panel {
+    background: var(--surface);
+    border-radius: var(--r-panel);
+  }
+
+  .tp-sunken {
+    background: var(--surface-2);
+    border-radius: var(--r-ctrl);
+  }
+
+  /* -- botones ------------------------------------------------------------ */
+
+  .tp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 15px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .tp-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .tp-btn svg {
+    width: 1.15em;
+    height: 1.15em;
+    flex: none;
+  }
+
+  .tp-btn-primary {
+    font-family: var(--font-display);
+    font-weight: 700;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .tp-btn-primary:hover:not(:disabled) {
+    background: var(--accent-hi);
+  }
+
+  .tp-btn-soft {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .tp-btn-soft:hover:not(:disabled) {
+    background: var(--surface-3);
+  }
+
+  .tp-btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+  }
+
+  .tp-btn-ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .tp-btn-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .tp-btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .tp-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 999px;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .tp-icon-btn:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  /* -- campos: rellenos, sin borde, focus = cambio de fondo --------------- */
+
+  .tp-field {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    border: none;
+    outline: none;
+    border-radius: var(--r-ctrl);
+    background: var(--surface-2);
+    color: var(--ink);
+    font-size: 13.5px;
+    transition: background var(--t-fast) var(--ease);
+  }
+
+  /* Sin agarradera de redimensionar: esas rayitas de la esquina son lo unico
+     de la interfaz que dibuja el navegador y cantan. */
+  textarea.tp-field {
+    height: auto;
+    padding: 12px 15px;
+    line-height: 1.6;
+    resize: none;
+  }
+
+  .tp-field:hover {
+    background: var(--surface-3);
+  }
+
+  .tp-field:focus {
+    background: var(--surface-3);
+  }
+
+  /* El buscador se ensancha al escribir en él: es la única pista de que está
+     activo, ya que aquí el foco no dibuja anillo. */
+  .tp-search {
+    transition:
+      background var(--t-fast) var(--ease),
+      flex-grow var(--t) var(--ease);
+    flex-grow: 1;
+  }
+
+  .tp-search:focus-within {
+    flex-grow: 1.6;
+  }
+
+  .tp-search:focus-within .tp-search-icon {
+    color: var(--accent-ink);
+  }
+
+  /* Etiqueta de campo: mono, mayusculas, tracking abierto. */
+  .tp-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 7px;
+  }
+
+  /* -- chips -------------------------------------------------------------- */
+
+  .tp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 23px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /**
+   * Al pasar por la fila, el fondo sube a --surface-2, que es exactamente el
+   * color de los chips: se los tragaba. Suben un escalon con ella para no
+   * desaparecer, y el que se toca se pone del amarillo suave de marca.
+   */
+  .tp-row:hover .tp-chip {
+    background: var(--surface-3);
+  }
+
+  button.tp-chip,
+  a.tp-chip {
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  button.tp-chip:hover,
+  a.tp-chip:hover,
+  .tp-row:hover button.tp-chip:hover,
+  .tp-row:hover a.tp-chip:hover {
+    background: var(--accent-pill);
+    color: var(--accent-ink);
+  }
+
+  .tp-chip-mono {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Eyebrow / micro-titulo de seccion. */
+  .tp-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .tp-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
+  /* Lienzo virtualizado de la lista: alto completo y barra invisible. */
+  .tp-viewport {
+    height: 100%;
+    overscroll-behavior: contain;
+  }
+
+  .tp-viewport .cdk-virtual-scroll-content-wrapper {
+    width: 100%;
+  }
+
+  /* Cada hueco mide lo mismo: 96 de fila y 8 de separación. El numero tiene que
+     coincidir con el `itemSize` del viewport virtual, o la lista se desalinea. */
+  .tp-row-slot {
+    height: 104px;
+    padding-bottom: 8px;
+  }
+
+  @media (max-width: 759px) {
+    .tp-row-slot {
+      height: 152px;
+    }
+  }
+
+  /* Una sola fila que se desplaza de lado sin romper el alto del formulario. */
+  .tp-scroll-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  /* Control segmentado: track con 4px de padding, radio exterior = interior + 3. */
+  .tp-track {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--surface-2);
+  }
+
+  .tp-track > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ink-3);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .tp-track > button:hover {
+    color: var(--ink);
+  }
+
+  /* El item activo sube de peso, no solo de color. */
+  .tp-track > button[data-on='true'] {
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* Menu flotante: ni borde ni sombra. Sube un escalon de superficie para
+     despegarse tanto del fondo de la pagina como del panel blanco de la lista. */
+  .tp-menu {
+    background: var(--surface-2);
+    border-radius: 18px;
+    padding: 8px;
+    transform-origin: top right;
+    animation: tp-pop 160ms var(--ease);
+  }
+
+  .tp-menu .tp-menu-item:hover {
+    background: var(--surface-3);
+  }
+
+  /* Salir se pone rojo al pasar el puntero: es la única acción que no vuelve. */
+  .tp-menu-item-danger {
+    color: var(--danger);
+  }
+
+  .tp-menu .tp-menu-item-danger:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  .tp-menu .tp-sep {
+    background: var(--surface-3);
+  }
+
+  .tp-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--r-ctrl);
+    text-align: left;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .tp-menu-item:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  /* Muestra de color. El elegido lleva un aro fino de su mismo color separado
+     por un hueco de aire: se reconoce de un vistazo sin engordar el punto ni
+     dibujar una rosquilla. El resto se apagan y se encienden al pasar. */
+  .tp-swatch {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.38;
+    outline: 1.5px solid transparent;
+    outline-offset: 3px;
+    cursor: pointer;
+    transition:
+      opacity var(--t-fast) var(--ease),
+      outline-color var(--t) var(--ease);
+  }
+
+  .tp-swatch:hover {
+    opacity: 0.8;
+  }
+
+  .tp-swatch.is-on {
+    opacity: 1;
+    outline-color: currentColor;
+  }
+
+  /* La de "mas colores" no es un color todavia: es un hueco al que se entra. */
+  .tp-swatch-mas {
+    display: grid;
+    place-items: center;
+    background: var(--surface-3);
+    opacity: 1;
+  }
+
+  .tp-swatch-mas.is-on {
+    background: currentColor;
+  }
+
+  /* Opcion de un desplegable anclado. El fondo del elegido va por clase y NO en
+     linea: en linea gana siempre y el hover del puntero no llegaba a verse. */
+  .tp-menu-opt {
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      background var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .tp-menu-opt:hover {
+    background: var(--surface-3);
+    color: var(--ink);
+  }
+
+  .tp-menu-opt.is-on {
+    background: var(--surface-4);
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* Separador: div de 1px con color, nunca border. */
+  .tp-sep {
+    height: 1px;
+    margin: 5px 0;
+    background: var(--surface-2);
+  }
+
+  /**
+   * Ficha de ajustes: cuadro del icono, texto y mando a la derecha. Sin hover:
+   * una ficha de ajustes no es un enlace, y al oscurecerla entera se pierden
+   * dentro los mandos, que es lo único que ahí se pulsa.
+   */
+  .tp-ficha {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    /* Se estira para repartirse el alto, pero nunca por debajo de esto. */
+    min-height: 88px;
+    padding: 16px 20px;
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .tp-ficha-icono {
+    display: flex;
+    height: 48px;
+    width: 48px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-ctrl);
+    background: var(--surface-2);
+    color: var(--accent-ink);
+  }
+
+  .tp-skeleton {
+    background: var(--surface-2);
+    border-radius: var(--r-card);
+    animation: tp-pulse 1.3s ease-in-out infinite;
+  }
+
+  /**
+   * Fila de la lista en rejilla de columnas FIJAS: cada dato cae siempre en la
+   * misma vertical tenga o no contenido, asi que nada se mueve al pasar el raton
+   * ni al abrir un menu. Las acciones ocupan su hueco desde el principio.
+   */
+  .tp-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) 34px 148px 138px 44px 104px;
+    align-items: center;
+    gap: 16px;
+    /* Altura constante: todas las filas miden lo mismo tengan o no stack. */
+    height: 96px;
+    padding: 0 18px;
+    border-radius: var(--r-card);
+    background: var(--surface);
+    /* Visible a proposito: con overflow hidden los desplegables de estado se
+       quedaban recortados dentro de la fila. El adorno se recorta aparte. */
+    overflow: visible;
+    transition: background var(--t-fast) var(--ease);
+  }
+
+  /* La caja que recorta el adorno, para que la fila no tenga que hacerlo. */
+  .tp-row-decor {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    color: var(--ink);
+    opacity: 0.045;
+    transition:
+      color var(--t) var(--ease),
+      opacity var(--t) var(--ease);
+  }
+
+  /* EL HOVER: la decoración de la fila se pone del amarillo de marca. */
+  .tp-row:hover .tp-row-decor {
+    color: var(--accent);
+    opacity: 0.3;
+  }
+
+  /* El contenido va por encima del adorno de fondo. Se excluye la caja del
+     adorno: si le cae `position: relative` vuelve al flujo, ocupa una celda de
+     la rejilla y corre todas las columnas una posición. */
+  .tp-row > *:not(.tp-row-decor) {
+    position: relative;
+  }
+
+  /**
+   * Al pasar el puntero, la fila se tine del amarillo de marca y le sale una
+   * pestana del acento en el filo izquierdo. Nada se mueve ni crece.
+   */
+  .tp-row:hover {
+    background: var(--surface-2);
+  }
+
+  /* Los enlaces de la fila también se encienden en el acento. */
+  /* Los chips llevan su propio hover mas arriba; aqui solo los botones-icono. */
+  .tp-row .tp-icon-btn:hover {
+    background: var(--accent-pill);
+    color: var(--accent-ink);
+  }
+
+  /* Pantalla intermedia: se sacrifica el repositorio, que es el unico que se
+     repite con el enlace publicado. */
+  @media (max-width: 1100px) and (min-width: 760px) {
+    .tp-row {
+      grid-template-columns: 46px minmax(0, 1fr) 138px 138px 44px 104px;
+    }
+    .tp-row > .tp-col-repo {
+      display: none;
+    }
+  }
+
+  /**
+   * Movil. El corte es 760px, el mismo que uso en mis otros proyectos.
+   *
+   * La fila no pierde nada: se dobla en dos renglones. Arriba quien es —icono,
+   * nombre, de que va, con que esta hecho— y abajo donde vive y que se puede
+   * hacer con el. Antes de esto el movil simplemente escondia el estado, los
+   * enlaces y la fecha, que es la mitad de la ficha.
+   */
+  @media (max-width: 759px) {
+    .tp-row {
+      grid-template-columns: 42px 74px minmax(0, 1fr) auto;
+      grid-template-areas:
+        'icono  cuerpo cuerpo acciones'
+        'estado estado enlace repo';
+      align-items: start;
+      column-gap: 10px;
+      row-gap: 12px;
+      height: 142px;
+      padding: 14px;
+    }
+
+    .tp-row > tp-project-icon {
+      grid-area: icono;
+    }
+    .tp-row > .tp-row-body {
+      grid-area: cuerpo;
+    }
+    .tp-row > .tp-col-status {
+      grid-area: estado;
+      align-self: center;
+    }
+    .tp-row > .tp-col-repo {
+      grid-area: repo;
+      align-self: center;
+      justify-content: flex-end;
+    }
+    .tp-row > .tp-col-live {
+      grid-area: enlace;
+      align-self: center;
+    }
+    .tp-row > .tp-col-acciones {
+      grid-area: acciones;
+      align-self: start;
+    }
+
+    /* La fecha se va: en un telefono no hay ancho para ella y es lo unico de la
+       fila que no lleva a ninguna parte. */
+    .tp-row > .tp-col-date {
+      display: none;
+    }
+
+    /* Editar tampoco necesita boton propio: se toca el nombre y se abre. */
+    .tp-row .tp-row-editar {
+      display: none;
+    }
+
+    /* El adorno se recorta contra el filo derecho y en vertical hay mas sitio:
+       se agranda para que no quede un garabato suelto en una esquina. */
+    .tp-row-decor tp-adorno {
+      width: 220px;
+    }
+  }
+}
+
+/* Enlace de texto: sin subrayado nunca. Al pasar el puntero se pone del
+   amarillo de marca, que es la unica pista de que ahi se pulsa. */
+.tp-link {
+  font-weight: 700;
+  color: var(--ink);
+  transition: color var(--t-fast) var(--ease);
+}
+
+.tp-link:hover {
+  color: var(--accent-ink);
+}
+
+.tp-link-soft {
+  font-weight: 600;
+  color: var(--ink-3);
+  transition: color var(--t-fast) var(--ease);
+}
+
+.tp-link-soft:hover {
+  color: var(--accent-ink);
+}
+
+/* La pila: cada losa se desplaza unos pixeles con su propio ciclo largo. */
+@keyframes tp-slab {
+  0%,
+  100% {
+    transform: translateX(0) rotate(var(--tilt));
+  }
+  50% {
+    transform: translateX(var(--drift)) rotate(var(--tilt));
+  }
+}
+
+/* El hilo de seguimiento avanza sin fin a lo largo de la pila. */
+@keyframes tp-thread {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
+
+/* Flotar muy leve de los puntos sueltos del acceso. */
+@keyframes tp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+/**
+ * Los dos paneles del acceso se cruzan con un desplazamiento de verdad, no con
+ * una captura de pantalla: cada uno se corre el ancho del otro. El fondo no se
+ * toca, asi que no parece que la pagina se recargue.
+ */
+/* Cada columna del acceso entra desde el lado del que viene al intercambiarse. */
+@keyframes tp-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-52%);
+  }
+}
+
+@keyframes tp-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(52%);
+  }
+}
+
+/**
+ * Cambio de pantalla: la vieja desaparece de golpe (Angular la quita) y la que
+ * entra sube un poco mientras aparece. No puede haber dos a la vez porque solo
+ * se anima la nueva.
+ */
+@keyframes tp-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/**
+ * La entrada se anima en un envoltorio interior, nunca en el host. Un ancestro
+ * con transform convierte `position: fixed` en relativo a EL y no a la ventana:
+ * los menus anclados salian 70 px por debajo de su boton. Lo que va en fijo
+ * (menus, cajon, confirmaciones) cuelga del host, fuera de este envoltorio.
+ */
+tp-projects-page > .tp-page,
+tp-auth-page {
+  animation: tp-page-in 300ms var(--ease-expo) backwards;
+}
+
+/* La fila que acaba de cambiar de estado se enciende y se apaga sola. */
+@keyframes tp-flash {
+  0% {
+    background: var(--accent-soft);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.tp-flash {
+  animation: tp-flash 900ms var(--ease) both;
+}
+
+/**
+ * Foto de perfil e icono de proyecto: como se pide cambiarlos.
+ *
+ * Con puntero, una capa que cubre la imagen al pasar por encima. En tactil no
+ * hay puntero, asi que esa capa estaba puesta a fija: la foto quedaba tapada
+ * siempre y parecia enganchada en hover. Alli la pista es una chapa pequena en
+ * la esquina y la imagen se ve entera.
+ */
+.tp-foto-chapa {
+  display: none;
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  /* Se despega del fondo con un aro del propio fondo, no con una sombra. */
+  outline: 3px solid var(--surface-2);
+}
+
+@media (hover: none) {
+  .tp-foto-capa {
+    display: none;
+  }
+  .tp-foto-chapa {
+    display: grid;
+  }
+}
+
+/* Las acciones de la fila esperan al puntero, pero el hueco ya esta reservado:
+   por eso aparecen sin mover nada. */
+.tp-hover-only {
+  opacity: 0;
+}
+
+.tp-row:hover .tp-hover-only,
+.tp-hover-only:focus-within {
+  opacity: 1;
+}
+
+/* El hover es un falso positivo en tactil. */
+@media (hover: none) {
+  .tp-hover-only {
+    opacity: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
