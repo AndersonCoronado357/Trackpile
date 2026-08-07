@@ -1,0 +1,214 @@
+<!-- Scrim -->
+<div
+  class="fixed inset-0 z-[70]"
+  style="background: var(--scrim); animation: tp-fade 180ms var(--ease) both"
+  (click)="closed.emit()"
+></div>
+
+<!-- En escritorio es un cajon que entra por la derecha; en el telefono, una hoja
+     que sube desde abajo, que es de donde llega el pulgar. -->
+<aside
+  class="tp-editor fixed inset-y-0 right-0 z-[75] flex w-full min-h-0 max-w-[520px] flex-col overflow-hidden"
+  style="background: var(--surface)"
+  role="dialog"
+  aria-modal="true"
+>
+  <!-- ═══════════════════════ cabecera: identidad ═══════════════════════ -->
+  <header class="relative flex-none overflow-hidden px-7 pt-6 pb-7" style="background: var(--surface-2)">
+    <tp-adorno class="w-[260px] opacity-[0.07]" style="color: var(--ink)" [n]="1" />
+
+    <div class="relative flex items-center justify-between">
+      <p class="tp-eyebrow">{{ isEdit() ? 'Editando' : 'Nuevo proyecto' }}</p>
+      <button type="button" class="tp-icon-btn -mr-2" (click)="closed.emit()" aria-label="Cerrar">
+        <tp-icon name="close" [size]="17" />
+      </button>
+    </div>
+
+    <div class="relative mt-5 flex items-center gap-4">
+      <!-- El icono es el botón: pulsas o sueltas una imagen encima -->
+      <label
+        class="group relative block flex-none cursor-pointer rounded-[20px]"
+        [style.outline]="draggingIcon() ? '2px dashed var(--accent)' : 'none'"
+        [style.outlineOffset]="'4px'"
+        (dragover)="$event.preventDefault(); draggingIcon.set(true)"
+        (dragleave)="draggingIcon.set(false)"
+        (drop)="onIconDrop($event)"
+      >
+        <tp-project-icon
+          [name]="draft().name || 'Nuevo'"
+          [iconUrl]="draft().iconUrl || null"
+          [accent]="draft().accent"
+          [size]="74"
+        />
+        <!-- La capa que tapa el icono es solo para el puntero. -->
+        <span
+          class="tp-foto-capa absolute inset-0 flex flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] opacity-0 transition-opacity group-hover:opacity-100"
+          style="background: color-mix(in srgb, var(--surface-2) 82%, transparent); color: var(--ink-2)"
+        >
+          <tp-icon name="camera" [size]="20" />
+          <span class="text-[10.5px] font-semibold">
+            {{ loadingIcon() ? '…' : draggingIcon() ? 'Soltar' : draft().iconUrl ? 'Cambiar' : 'Subir' }}
+          </span>
+        </span>
+        <!-- En tactil, chapa en la esquina y el icono se ve entero. -->
+        <span class="tp-foto-chapa" aria-hidden="true">
+          <tp-icon name="camera" [size]="13" />
+        </span>
+        <input type="file" accept="image/*" class="sr-only" (change)="onIconPick($event)" [disabled]="loadingIcon()" />
+      </label>
+
+      <div class="min-w-0 flex-1">
+        <!-- El nombre ES el título: se escribe donde se lee, sin caja -->
+        <input
+          class="w-full bg-transparent font-display text-[24px] font-bold tracking-[-0.03em] outline-none"
+          placeholder="Cómo se llama"
+          autocomplete="off"
+          [ngModel]="draft().name"
+          (ngModelChange)="patch('name', $event)"
+          name="pname"
+          aria-label="Nombre del proyecto"
+        />
+
+        <div class="mt-2.5">
+          <tp-color-picker [value]="draft().accent" (changed)="patch('accent', $event)" />
+        </div>
+
+        @if (iconIsUpload()) {
+          <button type="button" class="tp-link-soft ml-1 text-[11.5px]" (click)="clearIcon()">Quitar imagen</button>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════ cuerpo ═══════════════════════════ -->
+  <form class="tp-scroll flex flex-1 flex-col gap-7 px-7 py-7" (submit)="$event.preventDefault(); save()">
+    <!-- Estado -->
+    <section>
+      <p class="tp-eyebrow mb-3">En qué punto va</p>
+      <!-- Una opción por fila: se leen en vertical, como la propia lista -->
+      <div class="flex flex-col gap-1.5">
+        @for (status of statuses; track status) {
+          <button
+            type="button"
+            class="flex h-[44px] items-center gap-3 rounded-[var(--r-ctrl)] px-4 text-[13.5px] transition-colors"
+            [style.background]="draft().status === status ? 'var(--surface-3)' : 'var(--surface-2)'"
+            [style.color]="draft().status === status ? 'var(--ink)' : 'var(--ink-3)'"
+            [style.fontWeight]="draft().status === status ? 700 : 500"
+            (click)="patch('status', status)"
+          >
+            <span class="h-[7px] w-[7px] flex-none rounded-full" [style.background]="statusMeta[status].color"></span>
+            <span class="flex-1 text-left">{{ statusMeta[status].label }}</span>
+            @if (draft().status === status) {
+              <tp-icon name="check" [size]="15" style="color: var(--accent-ink)" />
+            }
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- Descripción -->
+    <section>
+      <p class="tp-eyebrow mb-3">De qué va</p>
+      <!-- Crece con lo que escribes; sin contador, que solo mete prisa. -->
+      <textarea
+        #desc
+        rows="2"
+        class="tp-field min-h-[64px] overflow-hidden"
+        placeholder="Una o dos frases. Lo que le dirías a alguien que te pregunta en qué andas."
+        [ngModel]="draft().description"
+        (ngModelChange)="patch('description', $event); grow(desc)"
+        (input)="grow(desc)"
+        name="pdesc"
+      ></textarea>
+    </section>
+
+    <!-- Stack -->
+    <section>
+      <p class="tp-eyebrow mb-3">Con qué lo estás haciendo</p>
+      <tp-stack-picker
+        [value]="draft().stack"
+        [options]="store.allStacks()"
+        (changed)="patch('stack', $event)"
+      />
+    </section>
+
+    <!-- Enlaces -->
+    <section>
+      <p class="tp-eyebrow mb-3">Dónde está</p>
+      <div class="flex flex-col gap-2">
+        <div class="tp-sunken flex items-center gap-3 px-4">
+          <tp-icon name="repo" [size]="17" class="flex-none" style="color: var(--ink-4)" />
+          <input
+            class="h-[46px] w-full bg-transparent font-mono text-[12.5px] outline-none"
+            placeholder="github.com/usuario/proyecto"
+            autocomplete="off"
+            [ngModel]="draft().repoUrl"
+            (ngModelChange)="patch('repoUrl', $event)"
+            name="prepo"
+            aria-label="Repositorio"
+          />
+        </div>
+        <div class="tp-sunken flex items-center gap-3 px-4">
+          <tp-icon name="globe" [size]="17" class="flex-none" style="color: var(--ink-4)" />
+          <input
+            class="h-[46px] w-full bg-transparent font-mono text-[12.5px] outline-none"
+            placeholder="miproyecto.com"
+            autocomplete="off"
+            [ngModel]="draft().liveUrl"
+            (ngModelChange)="patch('liveUrl', $event)"
+            name="plive"
+            aria-label="Enlace publicado"
+          />
+        </div>
+      </div>
+      <p class="mt-2.5 text-[11.5px]" style="color: var(--ink-4)">
+        El de abajo es el que ves publicado en la lista. Los dos son opcionales.
+      </p>
+    </section>
+
+    <!-- Fijar -->
+    <section>
+      <button
+        type="button"
+        class="flex w-full items-center gap-3.5 rounded-[var(--r-ctrl)] px-4 py-3.5 text-left transition-colors"
+        [style.background]="draft().pinned ? 'var(--accent-pill)' : 'var(--surface-2)'"
+        (click)="patch('pinned', !draft().pinned)"
+      >
+        <tp-icon name="pin" [size]="17" class="flex-none" [style.color]="draft().pinned ? 'var(--accent-ink)' : 'var(--ink-4)'" />
+        <span class="min-w-0 flex-1">
+          <span class="block text-[13.5px] font-semibold">Fijar arriba de la lista</span>
+          <span class="block text-[11.5px]" style="color: var(--ink-3)">Se queda el primero pase lo que pase</span>
+        </span>
+        <span
+          class="h-[22px] w-[38px] flex-none rounded-full p-[3px] transition-colors"
+          [style.background]="draft().pinned ? 'var(--accent)' : 'var(--surface-4)'"
+        >
+          <span
+            class="block h-4 w-4 rounded-full transition-transform"
+            style="background: var(--surface)"
+            [style.transform]="draft().pinned ? 'translateX(16px)' : 'none'"
+          ></span>
+        </span>
+      </button>
+    </section>
+
+    @if (problem()) {
+      <p class="rounded-[var(--r-ctrl)] px-4 py-3 text-[12.5px]" style="background: var(--danger-soft); color: var(--danger)">
+        {{ problem() }}
+      </p>
+    }
+  </form>
+
+  <!-- ════════════════════════════ pie ════════════════════════════ -->
+  <footer class="flex flex-none items-center gap-2 px-7 pb-6 pt-4" style="background: var(--surface)">
+    <button type="button" class="tp-btn tp-btn-ghost" (click)="closed.emit()">Cancelar</button>
+    <button
+      type="button"
+      class="tp-btn tp-btn-primary ml-auto h-11 min-w-[168px]"
+      [disabled]="!canSave() || saving()"
+      (click)="save()"
+    >
+      {{ saving() ? 'Guardando...' : isEdit() ? 'Guardar cambios' : 'Agregar a la pila' }}
+    </button>
+  </footer>
+</aside>

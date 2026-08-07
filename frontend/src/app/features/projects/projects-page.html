@@ -1,0 +1,307 @@
+<!-- La animación de entrada va aquí y no en el host: un ancestro con transform
+     convierte `position: fixed` en relativo a él, y los menús anclados y el
+     cajón de edición se pintaban desplazados. Estos viven fuera de este div. -->
+<div class="tp-page grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
+  <!-- Cabecera -->
+  <header class="flex-none px-4 pt-5 pb-3 sm:px-7">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="min-w-0">
+        <p class="tp-eyebrow">Tu pila</p>
+        <h1 class="mt-1 text-[24px] tracking-[-0.025em]">Proyectos</h1>
+      </div>
+
+      <!-- En movil los controles bajan a su propio renglon: compartiendo linea
+           con el titulo no le quedaba sitio al buscador ni para una palabra. -->
+      <div
+        class="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 max-[759px]:w-full max-[759px]:flex-none max-[759px]:pt-1"
+      >
+        <div class="tp-search relative min-w-0 max-w-[560px] flex-1 max-[759px]:max-w-none">
+          <span class="tp-search-icon pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style="color: var(--ink-4)">
+            <tp-icon name="search" [size]="16" />
+          </span>
+          <input
+            class="tp-field pl-11"
+            type="search"
+            placeholder="Buscar por nombre, descripción o tecnología..."
+            aria-label="Buscar proyecto"
+            [ngModel]="store.query()"
+            (ngModelChange)="store.query.set($event)"
+          />
+        </div>
+
+        <!-- El menú mide exactamente lo que el botón y se ancla a su borde -->
+        <!-- En movil solo el icono: la etiqueta se comia el buscador. -->
+        <div class="relative w-[168px] flex-none max-[759px]:w-[46px]">
+          <button type="button" class="tp-btn tp-btn-soft w-full justify-between max-[759px]:justify-center max-[759px]:px-0" (click)="sortOpen.set(!sortOpen())">
+            <span class="flex min-w-0 items-center gap-2">
+              <!-- Solo el icono: sin etiqueta al lado, la flecha sobra. -->
+              <tp-icon [name]="viewport.isMobile() ? 'sort-lines' : 'sort'" [size]="15" />
+              <span class="truncate max-[759px]:hidden">{{ sortLabels[store.sort()] }}</span>
+            </span>
+            <!-- Se quita del árbol y no por CSS: `tp-icon` lleva su propio
+                 display y le ganaba a la clase que lo escondía. -->
+            @if (!viewport.isMobile()) {
+              <tp-icon name="chevron-down" [size]="13" style="color: var(--ink-4)" />
+            }
+          </button>
+          @if (sortOpen()) {
+            <div
+              class="tp-menu absolute inset-x-0 top-[calc(100%+6px)] z-30 max-[759px]:left-auto max-[759px]:right-0 max-[759px]:w-[168px]"
+              (mouseleave)="sortOpen.set(false)"
+            >
+              @for (key of sortKeys; track key) {
+                <button
+                  type="button"
+                  class="tp-menu-item tp-menu-opt"
+                  [class.is-on]="store.sort() === key"
+                  (click)="store.sort.set(key); sortOpen.set(false)"
+                >
+                  <span class="flex-1">{{ sortLabels[key] }}</span>
+                  @if (store.sort() === key) {
+                    <tp-icon name="check" [size]="14" style="color: var(--accent-ink)" />
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <button type="button" class="tp-btn tp-btn-primary flex-none" (click)="openNew()">
+          <tp-icon name="plus" [size]="16" />
+          <span class="hidden sm:inline">Nuevo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros por estado -->
+    <div class="mt-4 flex min-w-0 items-center gap-2 overflow-x-auto">
+      <div class="tp-track flex-none">
+        @for (tab of filterTabs(); track tab.id) {
+          <button type="button" [attr.data-on]="store.statusFilter() === tab.id" (click)="store.statusFilter.set(tab.id)">
+            @if (tab.id !== 'all') {
+              <span class="h-[6px] w-[6px] flex-none rounded-full" [style.background]="meta[tab.id].color"></span>
+            }
+            {{ tab.label }}
+            <span class="mono text-[11px]" style="color: var(--ink-4)">{{ tab.count }}</span>
+          </button>
+        }
+      </div>
+
+      @if (store.stackFilter(); as tech) {
+        <button
+          type="button"
+          class="tp-chip h-[30px] flex-none px-3"
+          style="background: var(--accent-pill); color: var(--accent-ink)"
+          (click)="store.stackFilter.set(null)"
+        >
+          {{ tech }}
+          <tp-icon name="close" [size]="12" />
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Lista: filas sueltas separadas por hueco, sin contenedor ni lineas -->
+  <div class="grid min-h-0 grid-rows-[minmax(0,1fr)] px-4 pb-6 sm:px-7">
+    <div class="min-h-0">
+      @if (store.loading()) {
+        <div class="flex flex-col gap-2">
+          @for (n of [1, 2, 3, 4, 5, 6]; track n) {
+            <div class="tp-skeleton h-[96px]"></div>
+          }
+        </div>
+      } @else if (store.error()) {
+        <tp-empty icon="inbox" title="No se pudo cargar la lista" [hint]="store.error()">
+          <button type="button" class="tp-btn tp-btn-soft" (click)="store.load(true)">Reintentar</button>
+        </tp-empty>
+      } @else if (!store.visible().length) {
+        @if (store.hasFilters()) {
+          <tp-empty icon="search" title="Sin resultados" hint="Ningún proyecto coincide con lo que estás buscando.">
+            <button type="button" class="tp-btn tp-btn-soft" (click)="store.clearFilters()">Limpiar filtros</button>
+          </tp-empty>
+        } @else {
+          <tp-empty
+            icon="plus"
+            title="Tu pila está vacía"
+            hint="Agrega el primer proyecto: nombre, stack, descripción y el enlace de lo que ya publicaste."
+          >
+            <button type="button" class="tp-btn tp-btn-primary" (click)="openNew()">
+              <tp-icon name="plus" [size]="16" />
+              Agregar proyecto
+            </button>
+          </tp-empty>
+        }
+      } @else {
+        <!-- Virtualizada: con 500 proyectos, tenerlos todos en el DOM dejaba el
+             desplazamiento en 734 ms. Solo viven las filas que se ven. -->
+        <cdk-virtual-scroll-viewport [itemSize]="itemSize()" class="tp-viewport" [attr.data-view]="viewKey()">
+          <ul class="flex flex-col">
+            <li *cdkVirtualFor="let project of store.visible(); let i = index; templateCacheSize: 0" class="tp-row-slot">
+              <article class="tp-row group" [class.tp-flash]="flashed() === project.id">
+                <!-- El color NO va en línea: en línea ganaba siempre y el
+                     hover nunca llegaba a ponerlo amarillo. -->
+                <span class="tp-row-decor">
+                  <tp-adorno class="w-[300px]" forma="fila" [n]="i" />
+                </span>
+                <!-- 1. icono -->
+                <tp-project-icon [name]="project.name" [iconUrl]="project.iconUrl" [accent]="project.accent" [size]="42" />
+
+                <!-- 2. cuerpo -->
+                <div class="tp-row-body min-w-0">
+                  <div class="flex min-w-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      class="tp-row-name min-w-0 truncate text-left font-display text-[15px] font-bold tracking-[-0.015em] transition-colors"
+                      (click)="openEdit(project)"
+                    >
+                      {{ project.name }}
+                    </button>
+                    @if (project.pinned) {
+                      <tp-icon name="pin" [size]="12" class="flex-none" style="color: var(--accent-ink)" />
+                    }
+                  </div>
+
+                  <p class="mt-0.5 truncate text-[12.5px]" style="color: var(--ink-3)">
+                    {{ project.description || '—' }}
+                  </p>
+
+                  <!-- Renglón siempre presente: sin él las filas quedan de alturas distintas -->
+                  <div class="mt-1.5 flex h-[23px] min-w-0 items-center gap-1 overflow-hidden">
+                    @for (tech of project.stack.slice(0, 4); track tech) {
+                      <button type="button" class="tp-chip flex-none" (click)="store.stackFilter.set(tech)">{{ tech }}</button>
+                    }
+                    @if (project.stack.length > 4) {
+                      <span class="tp-chip flex-none" style="color: var(--ink-4)">+{{ project.stack.length - 4 }}</span>
+                    }
+                    @if (!project.stack.length) {
+                      <span class="text-[11.5px]" style="color: var(--ink-4)">Sin stack</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- 3. repositorio (columna fija: reserva su hueco siempre) -->
+                <div class="tp-col-repo tp-col-links flex justify-center">
+                  @if (project.repoUrl) {
+                    <a
+                      [href]="project.repoUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="tp-icon-btn"
+                      [attr.aria-label]="'Repositorio de ' + project.name"
+                      title="Repositorio"
+                    >
+                      <tp-icon name="repo" [size]="16" />
+                    </a>
+                  }
+                </div>
+
+                <!-- 4. enlace publicado -->
+                <div class="tp-col-live tp-col-links min-w-0">
+                  @if (project.liveUrl) {
+                    <a
+                      [href]="project.liveUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="tp-chip h-[26px] w-full gap-1.5"
+                      [title]="project.liveUrl"
+                    >
+                      <tp-icon name="globe" [size]="13" class="flex-none" style="color: var(--ok)" />
+                      <span class="truncate font-mono text-[10.5px]">{{ host(project.liveUrl) }}</span>
+                    </a>
+                  }
+                </div>
+
+                <!-- 5. estado -->
+                <div class="tp-col-status relative">
+                  <button
+                    type="button"
+                    class="flex h-[30px] w-full items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium transition-colors hover:bg-[var(--surface-3)]"
+                    (click)="openStatusMenu(project, $event)"
+                  >
+                    <span class="h-[6px] w-[6px] flex-none rounded-full" [style.background]="meta[project.status].color"></span>
+                    <span class="min-w-0 flex-1 truncate text-left" style="color: var(--ink-2)">
+                      {{ meta[project.status].label }}
+                    </span>
+                    <tp-icon name="chevron-down" [size]="12" class="flex-none" style="color: var(--ink-4)" />
+                  </button>
+                </div>
+
+                <!-- 6. fecha -->
+                <tp-ago class="tp-col-date mono text-right text-[11px]" style="color: var(--ink-4)" [value]="project.updatedAt" />
+
+                <!-- 7. acciones: el hueco existe siempre, solo cambia la opacidad.
+                     En movil se ven siempre; alli no hay puntero que las saque. -->
+                <div class="tp-col-acciones tp-hover-only flex items-center justify-end gap-0.5 transition-opacity">
+                  <button
+                    type="button"
+                    class="tp-icon-btn"
+                    (click)="store.togglePinned(project)"
+                    [attr.aria-label]="project.pinned ? 'Quitar de arriba' : 'Fijar arriba'"
+                  >
+                    <tp-icon name="pin" [size]="15" />
+                  </button>
+                  <button
+                    type="button"
+                    class="tp-icon-btn tp-row-editar"
+                    (click)="openEdit(project)"
+                    [attr.aria-label]="'Editar ' + project.name"
+                  >
+                    <tp-icon name="edit" [size]="15" />
+                  </button>
+                  <button
+                    type="button"
+                    class="tp-icon-btn"
+                    (click)="pendingDelete.set(project)"
+                    [attr.aria-label]="'Eliminar ' + project.name"
+                  >
+                    <tp-icon name="trash" [size]="15" />
+                  </button>
+                </div>
+              </article>
+            </li>
+          </ul>
+        </cdk-virtual-scroll-viewport>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- El menú de estado vive FUERA de la lista, en posición fija: dentro lo
+     recortaba el propio scroll de la lista. -->
+@if (statusMenu(); as menu) {
+  <div class="fixed inset-0 z-[60]" (click)="statusMenuFor.set(null)"></div>
+  <div
+    class="tp-menu fixed z-[61] !p-1.5"
+    [style.left.px]="menu.x"
+    [style.top.px]="menu.y"
+    [style.width.px]="menu.w"
+    (click)="$event.stopPropagation()"
+  >
+    @for (status of statuses; track status) {
+      <!-- El elegido se marca con su propia superficie y el texto en negrita.
+           Sin palomita: ya se sabe cuál es porque está encendido. -->
+      <button
+        type="button"
+        class="tp-menu-opt flex h-[34px] w-full items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 text-left text-[12.5px]"
+        [class.is-on]="menu.project.status === status"
+        (click)="setStatus(menu.project, status)"
+      >
+        <span class="h-[6px] w-[6px] flex-none rounded-full" [style.background]="meta[status].color"></span>
+        <span class="min-w-0 flex-1 truncate">{{ meta[status].label }}</span>
+      </button>
+    }
+  </div>
+}
+
+@if (editing() !== undefined) {
+  <tp-project-editor [project]="editing() ?? null" (closed)="closeEditor()" />
+}
+
+@if (pendingDelete(); as target) {
+  <tp-confirm
+    title="Eliminar proyecto"
+    [message]="'Se borrará &quot;' + target.name + '&quot; de tu lista. No se puede deshacer.'"
+    (confirm)="confirmDelete()"
+    (cancel)="pendingDelete.set(null)"
+  />
+}
