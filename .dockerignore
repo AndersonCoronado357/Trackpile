@@ -1,0 +1,12 @@
+# Lo que no debe entrar en la imagen. El .env de aqui apunta a la base local y
+# lleva credenciales de mi maquina: en el servidor las variables llegan del
+# entorno, que ademas mandan sobre el archivo.
+**/node_modules
+**/dist
+**/.angular
+**/.env
+**/.env.*
+.git
+.vscode
+scratchpad
+*.log
