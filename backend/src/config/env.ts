@@ -96,7 +96,5 @@ export const env = {
     /** Necesario para canjear el codigo por el token en el flujo de redireccion. */
     googleClientSecret: str('GOOGLE_CLIENT_SECRET', ''),
   },
-  /** Sembrar proyectos de ejemplo al crear la primera cuenta. */
-  seedNewAccounts: bool('SEED_NEW_ACCOUNTS', true),
   paths: { backendRoot, repoRoot },
 } as const;

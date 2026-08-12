@@ -38,7 +38,6 @@ import {
   updateProject,
 } from '../projects/projects.repo.js';
 import { createToken, deleteToken, listTokens } from '../auth/tokens.service.js';
-import { seedForUser } from '../db/seed.js';
 import { apiDocs } from './docs.js';
 
 export const api = Router();
@@ -108,7 +107,6 @@ api.post(
     if (!puedeRegistrarse(input.email)) throw badRequest('Ese correo no tiene permitido abrir cuenta aqui');
     const user = await register(input.email, input.name, input.password);
     issueSession(res, user.id);
-    if (env.seedNewAccounts) await seedForUser(user.id);
     res.status(201).json(user);
   }),
 );
@@ -132,9 +130,8 @@ api.post(
   '/auth/google',
   asyncRoute(async (req, res) => {
     const input = googleSchema.parse(req.body);
-    const { user, created } = await signInWithGoogle(input.credential);
+    const { user } = await signInWithGoogle(input.credential);
     issueSession(res, user.id);
-    if (created && env.seedNewAccounts) await seedForUser(user.id);
     res.json(user);
   }),
 );

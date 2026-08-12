@@ -3,7 +3,6 @@ import { Router, type Request } from 'express';
 import { env } from '../config/env.js';
 import { issueSession } from '../auth/auth.service.js';
 import { RUTA_VUELTA, exchangeCode, googleAuthUrl, googleEnabled, signInWithGoogle } from '../auth/google.service.js';
-import { seedForUser } from '../db/seed.js';
 import { asyncRoute } from './errors.js';
 
 /**
@@ -65,9 +64,10 @@ googleWeb.get(
 
     try {
       const identidad = await exchangeCode(baseDe(req), code);
-      const { user, created } = await signInWithGoogle(identidad);
+      const { user } = await signInWithGoogle(identidad);
       issueSession(res, user.id);
-      if (created && env.seedNewAccounts) await seedForUser(user.id);
+      // La cuenta nueva entra con la lista vacia: los proyectos son de quien
+      // los escribe, y aqui no hay nada de ejemplo que ensenar.
       res.redirect('/proyectos');
     } catch (error) {
       // El motivo real se queda en el servidor; fuera solo va el aviso.
