@@ -26,14 +26,31 @@ const c = {
   green: (s) => `\x1b[32m${s}\x1b[0m`,
 };
 
-/** ¿Está libre este puerto? */
-function isFree(port) {
+/** ¿Puedo escuchar en este puerto y en esta direccion? */
+function puedoEscuchar(port, host) {
   return new Promise((resolve) => {
     const server = createServer();
     server.unref();
     server.on('error', () => resolve(false));
-    server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
+    server.listen(port, host, () => server.close(() => resolve(true)));
   });
+}
+
+/**
+ * Libre de verdad: libre en las dos direcciones a las que puede resolver
+ * `localhost`, ademas de en el comodin IPv4.
+ *
+ * Mirando solo 127.0.0.1 el puerto parecia libre aunque otro proyecto ya
+ * estuviera escuchando en ::1. Los dos arrancaban —son familias distintas— pero
+ * `localhost` en Windows resuelve antes a IPv6, asi que al abrir la direccion
+ * contestaba la otra aplicacion y esta parecia rota sin estarlo. El comodin `::`
+ * tampoco vale para detectarlo: deja enlazar aunque ::1 este cogido.
+ */
+async function isFree(port) {
+  for (const host of ['0.0.0.0', '127.0.0.1', '::1']) {
+    if (!(await puedoEscuchar(port, host))) return false;
+  }
+  return true;
 }
 
 /**
